@@ -1,51 +1,74 @@
 <?php
 session_start();
 
+// Inicjalizacja tablicy zadań, jeśli jeszcze nie istnieje w sesji
 if (!isset($_SESSION['tasks'])) {
-    $_SESSION['tasks'] = [];
+    $_SESSION['tasks'] = array();
 }
 
 $tasks = $_SESSION['tasks'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $errors = [];
+    $errors = array();
 
+    // Obsługa usuwania zadania
     if (isset($_POST['delete_task'])) {
         $taskIndex = $_POST['delete_task'];
         if (isset($tasks[$taskIndex])) {
             unset($tasks[$taskIndex]);
-            $_SESSION['tasks'] = array_values($tasks);
+            $_SESSION['tasks'] = array_values($tasks); // Przebudowanie indeksów
         }
         header('Location: ' . $_SERVER['PHP_SELF']);
         exit;
     }
 
-    $title = isset($_POST['title']) ? trim($_POST['title']) : '';
-    $category = isset($_POST['category']) ? trim($_POST['category']) : '';
-    $description = isset($_POST['description']) ? trim($_POST['description']) : '';
-    $priority = isset($_POST['priority']) ? trim($_POST['priority']) : '';
-    $status = isset($_POST['status']) ? trim($_POST['status']) : '';
-    $date = isset($_POST['date']) ? trim($_POST['date']) : '';
-    $time = isset($_POST['time']) ? trim($_POST['time']) : '';
-    $location = isset($_POST['location']) ? trim($_POST['location']) : '';
-    $assigned = isset($_POST['assigned']) ? trim($_POST['assigned']) : '';
-    $resources = isset($_POST['resources']) ? array_map('htmlspecialchars', $_POST['resources']) : [];
+    // Pobieranie i czyszczenie danych z formularza
+    $title = trim(isset($_POST['title']) ? $_POST['title'] : '');
+    $category = trim(isset($_POST['category']) ? $_POST['category'] : '');
+    $description = trim(isset($_POST['description']) ? $_POST['description'] : '');
+    $priority = trim(isset($_POST['priority']) ? $_POST['priority'] : '');
+    $status = trim(isset($_POST['status']) ? $_POST['status'] : '');
+    $date = trim(isset($_POST['date']) ? $_POST['date'] : '');
+    $time = trim(isset($_POST['time']) ? $_POST['time'] : '');
+    $location = trim(isset($_POST['location']) ? $_POST['location'] : '');
+    $assigned = trim(isset($_POST['assigned']) ? $_POST['assigned'] : '');
+    $tags = trim(isset($_POST['tags']) ? $_POST['tags'] : '');
 
-    if ($title === '') {
-        $errors[] = "Tytuł zadania jest wymagany.";
-    }
-    if ($category === '') {
-        $errors[] = "Kategoria zadania jest wymagana.";
-    }
-    if ($priority === '') {
-        $errors[] = "Priorytet zadania jest wymagany.";
-    }
+    // Rozdzielenie tagów po białych znakach
+    $tagsArray = preg_split('/\s+/', $tags, -1, PREG_SPLIT_NO_EMPTY);
+
+    // Filtrowanie tablicy resources, z zabezpieczeniem przed HTML-injection
+    $resources = isset($_POST['resources']) ? array_map('htmlspecialchars', $_POST['resources']) : array();
+
+    // Walidacja wymaganych pól
+    if ($title === '') $errors[] = "Tytuł zadania jest wymagany.";
+    if ($category === '') $errors[] = "Kategoria zadania jest wymagana.";
+    if ($priority === '') $errors[] = "Priorytet zadania jest wymagany.";
+
+    // Walidacja daty za pomocą wyrażenia regularnego
     if ($date === '') {
         $errors[] = "Data wykonania jest wymagana.";
+    } else {
+        if (!preg_match("/^\d{4}-\d{2}-\d{2}$/", $date)) {
+            // ^\d{4}-\d{2}-\d{2}$ - data w formacie RRRR-MM-DD
+            $errors[] = "Data wykonania musi być w formacie RRRR-MM-DD.";
+        }
     }
 
+    // Walidacja tagów
+    if (!empty($tags)) {
+        foreach ($tagsArray as $tag) {
+            if (!preg_match("/^[a-zA-Z0-9_]+$/", $tag)) {
+                // ^[a-zA-Z0-9_]+$ - tylko litery, cyfry i podkreślniki
+                $errors[] = "Tagi mogą zawierać tylko litery, cyfry i podkreślniki.";
+                break;
+            }
+        }
+    }
+
+    // Jeśli brak błędów, dodaj zadanie
     if (empty($errors)) {
-        $newTask = [
+        $newTask = array(
             'title' => htmlspecialchars($title),
             'category' => htmlspecialchars($category),
             'description' => htmlspecialchars($description),
@@ -55,9 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'time' => htmlspecialchars($time),
             'location' => htmlspecialchars($location),
             'assigned' => htmlspecialchars($assigned),
-            'resources' => $resources
-        ];
-
+            'resources' => $resources,
+            'tags' => $tagsArray
+        );
         $tasks[] = $newTask;
         $_SESSION['tasks'] = $tasks;
         header('Location: ' . $_SERVER['PHP_SELF']);
@@ -67,223 +90,113 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Sortowanie
 $sortBy = isset($_GET['sort']) ? $_GET['sort'] : '';
-$allowedSortFields = ['title', 'priority', 'date', 'category'];
-
+$allowedSortFields = array('title', 'priority', 'date', 'category');
 if (in_array($sortBy, $allowedSortFields)) {
-    usort($tasks, function ($a, $b) use ($sortBy) {
+    usort($tasks, function($a, $b) use ($sortBy) {
         return strcmp($a[$sortBy], $b[$sortBy]);
     });
 }
+
+// Filtrowanie według priorytetu, statusu i tagów
+$filterPriority = isset($_GET['filter_priority']) ? $_GET['filter_priority'] : '';
+$filterStatus = isset($_GET['filter_status']) ? $_GET['filter_status'] : '';
+$filterTags = isset($_GET['filter_tags']) ? $_GET['filter_tags'] : '';
+
+if ($filterPriority !== '' || $filterStatus !== '' || $filterTags !== '') {
+    $filterTagArray = preg_split('/\s+/', $filterTags, -1, PREG_SPLIT_NO_EMPTY);
+    $tasks = array_filter($tasks, function($task) use ($filterPriority, $filterStatus, $filterTagArray) {
+        $pass = true;
+
+        if ($filterPriority !== '' && $task['priority'] !== $filterPriority) {
+            $pass = false;
+        }
+
+        if ($filterStatus !== '' && $task['status'] !== $filterStatus) {
+            $pass = false;
+        }
+
+        // Sprawdzenie, czy wszystkie tagi pasują do zadania
+        if (!empty($filterTagArray)) {
+            $taskTags = $task['tags'];
+            foreach ($filterTagArray as $tag) {
+                if (!in_array($tag, $taskTags)) {
+                    $pass = false;
+                    break;
+                }
+            }
+        }
+
+        return $pass;
+    });
+}
+
+// Filtrowanie po wyrażeniu regularnym z GET
+$regex = isset($_GET['regex']) ? $_GET['regex'] : '';
+if (!empty($regex)) {
+    $tasks = array_filter($tasks, function($task) use ($regex) {
+        foreach ($task as $value) {
+            if (is_array($value)) {
+                foreach ($value as $item) {
+                    if (@preg_match('/' . $regex . '/ui', $item)) return true;
+                }
+            } else {
+                if (@preg_match('/' . $regex . '/ui', $value)) return true;
+            }
+        }
+        return false;
+    });
+}
+
+// Formatowanie opisu zadania
+function formatTaskDescription($description) {
+    // Zamiana URLi na aktywne linki
+    $description = preg_replace(
+        '/\b(?:https?|ftp):\/\/[a-z0-9\-+&@#\/%?=~_|!:,.;]*[a-z0-9\-+&@#\/%=~_|]/i',
+        '<a href="$0" target="_blank">$0</a>',
+        $description
+    );
+
+    // Zamiana #tagów na span z klasą
+    $description = preg_replace(
+        '/#([a-zA-Z0-9_]+)/',
+        '<span class="tag">#$1</span>',
+        $description
+    );
+
+    // Zamiana znaków listy na <li>
+    $description = preg_replace(
+        '/^[\s]*[-*+][\s]+(.+)$/m',
+        '<li>$1</li>',
+        $description
+    );
+
+    // Dodanie znaczników <ul> wokół listy
+    if (strpos($description, '<li>') !== false) {
+        $description = '<ul>' . $description . '</ul>';
+        $description = str_replace('</ul><ul>', '', $description); // Usunięcie podwójnych list
+    }
+
+    return $description;
+}
 ?>
+
+
+
 <!doctype html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <title>ToDoList</title>
-    <style>
-        * {
-            font-family: Arial;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            background: #f5f5f5;
-        }
-
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 30px;
-        }
-
-        .content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 800px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            padding-top: 10px;
-        }
-
-        .line {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            gap: 0;
-        }
-
-        .line label {
-            width: 50%;
-            text-align: left;
-        }
-
-        label {
-            margin: 10px;
-        }
-
-        textarea {
-            width: 720px;
-            height: 90px;
-            resize: none;
-        }
-
-        button {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #2c3f50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #41607d;
-        }
-
-        h1, h2, h3 {
-            color: #2c3f50;
-        }
-
-        h1 {
-            text-align: center;
-        }
-
-        h1::after {
-            content: "";
-            display: block;
-            width: 50px;
-            height: 3px;
-            background-color: #2c3f50;
-            margin: 5px auto 0;
-        }
-
-        .task-card {
-            position: relative;
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 15px;
-            width: 300px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            font-size: 14px;
-        }
-
-        .task-card h3 {
-            margin: 0;
-            font-size: 20px;
-            color: #2c3f50;
-        }
-
-        .task-card .badge {
-            background-color: #eef1f6;
-            color: #2c3f50;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            width: fit-content;
-        }
-
-        .task-card p {
-            margin: 0;
-            color: #000000;
-        }
-
-        .task-card .section {
-            border-top: 1px solid #ddd;
-            padding-top: 10px;
-        }
-
-        .task-card .resource-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-top: 5px;
-        }
-
-        .task-card .resource-list span {
-            background-color: #eef1f6;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-        }
-
-        .task-card .footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
-        }
-
-        .task-card .priority {
-            background-color: #fef3c7;
-            color: #92400e;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-        }
-
-        .task-card .status {
-            background-color: #e0e7ff;
-            color: #3730a3;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-        }
-
-        .task-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        .sort a {
-            text-decoration: none;
-            color: #2c3f50;
-        }
-
-        .zasoby label{
-            margin: 0;
-        }
-
-        .task-card form button {
-            padding-left: 5px;
-            padding-right: 5px;
-            padding-bottom: 2.5px;
-            padding-top: 2.5px;
-            background: rgba(209, 20, 20, 0.81);
-            border: none;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            margin: 0;
-        }
-
-
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <h1>Menedżer Zadań</h1>
 
-<div class="container">
-    <div class="content">
+<div class="main-wrapper">
+    <div class="form-container">
         <h2>Dodaj nowe zadanie</h2>
 
         <?php if (!empty($error)): ?>
@@ -292,8 +205,10 @@ if (in_array($sortBy, $allowedSortFields)) {
 
         <form method="POST" id="taskForm">
             <div class="line">
-                <label><p>Tytuł zadania:</p><input name="title" required></label>
-                <label><p>Kategoria:</p>
+                <label>Tytuł zadania:
+                    <input name="title" required>
+                </label>
+                <label>Kategoria:
                     <select name="category" required>
                         <option value="">Wybierz kategorię</option>
                         <option>Domowe</option>
@@ -305,10 +220,12 @@ if (in_array($sortBy, $allowedSortFields)) {
                 </label>
             </div>
 
-            <label><p>Opis zadania:</p><textarea name="description"></textarea></label>
+            <label>Opis zadania:
+                <textarea name="description"></textarea>
+            </label>
 
             <div class="line">
-                <label><p>Priorytet:</p>
+                <label>Priorytet:
                     <select name="priority" required>
                         <option value="">Wybierz priorytet</option>
                         <option>Niski</option>
@@ -316,26 +233,35 @@ if (in_array($sortBy, $allowedSortFields)) {
                         <option>Wysoki</option>
                     </select>
                 </label>
-
-                <label><p>Status:</p>
+                <label>Status:
                     <select name="status">
                         <option>Do zrobienia</option>
                         <option>W trakcie</option>
                         <option>Zakończone</option>
                     </select>
                 </label>
-
-                <label><p>Data wykonania:</p><input type="date" name="date" required></label>
+                <label>Data wykonania:
+                    <input type="date" name="date" required>
+                </label>
             </div>
 
             <div class="line">
-                <label><p>Szacowany czas (minuty):</p><input type="number" name="time"></label>
-                <label><p>Lokalizacja:</p><input name="location"></label>
-                <label><p>Osoba przypisana:</p><input name="assigned"></label>
+                <label>Szacowany czas (minuty):
+                    <input type="number" name="time">
+                </label>
+                <label>Lokalizacja:
+                    <input name="location">
+                </label>
+                <label>Osoba przypisana:
+                    <input name="assigned">
+                </label>
+                <label>Tagi (oddzielone spacją):
+                    <input name="tags">
+                </label>
             </div>
 
             <div class="zasoby">
-                <label><p>Potrzebne zasoby:</p></label>
+                <label>Potrzebne zasoby:</label>
                 <label><input type="checkbox" name="resources[]" value="Komputer"> Komputer</label>
                 <label><input type="checkbox" name="resources[]" value="Internet"> Internet</label>
                 <label><input type="checkbox" name="resources[]" value="Telefon"> Telefon</label>
@@ -346,30 +272,78 @@ if (in_array($sortBy, $allowedSortFields)) {
                 <label><input type="checkbox" name="resources[]" value="Inne"> Inne</label>
             </div>
 
-            <button type="submit">Dodaj zadanie</button>
+            <button class="button-left" type="submit">Dodaj zadanie</button>
         </form>
     </div>
-</div>
 
-<div class="container">
-    <div class="content">
-        <h2>Lista zadań</h2>
-        <p class="sort">Sortuj według:
-            <a href="?sort=title">Tytułu</a> |
-            <a href="?sort=priority">Priorytetu</a> |
-            <a href="?sort=date">Daty</a> |
-            <a href="?sort=category">Kategorii</a>
-        </p>
+
+
+    <div class="tasks-container">
+
+
+        <div class="filtry">
+
+
+
+            <div class="sort">
+                <form method="GET" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                    <label>
+                        Priorytet:
+                        <select name="filter_priority" class="filter-form-content">
+                            <option value="">Wszystkie</option>
+                            <option value="Niski" <?= isset($_GET['filter_priority']) && $_GET['filter_priority'] == 'Niski' ? 'selected' : '' ?>>Niski</option>
+                            <option value="Średni" <?= isset($_GET['filter_priority']) && $_GET['filter_priority'] == 'Średni' ? 'selected' : '' ?>>Średni</option>
+                            <option value="Wysoki" <?= isset($_GET['filter_priority']) && $_GET['filter_priority'] == 'Wysoki' ? 'selected' : '' ?>>Wysoki</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Status:
+                        <select name="filter_status" class="filter-form-content">
+                            <option value="">Wszystkie</option>
+                            <option value="Do zrobienia" <?= isset($_GET['filter_status']) && $_GET['filter_status'] == 'Do zrobienia' ? 'selected' : '' ?>>Do zrobienia</option>
+                            <option value="W trakcie" <?= isset($_GET['filter_status']) && $_GET['filter_status'] == 'W trakcie' ? 'selected' : '' ?>>W trakcie</option>
+                            <option value="Zakończone" <?= isset($_GET['filter_status']) && $_GET['filter_status'] == 'Zakończone' ? 'selected' : '' ?>>Zakończone</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Tagi:
+                        <input class="filter-form-content" type="text" name="filter_tags" value="<?= isset($_GET['filter_tags']) ? htmlspecialchars($_GET['filter_tags']) : '' ?>" >
+                    </label>
+
+                    <button type="submit">Filtruj</button>
+                </form>
+            </div>
+
+
+            <form class="wyszukaj" method="GET" style="margin-bottom: 20px;">
+                <input class="wyszukaj" placeholder="Wyszukaj" type="text" id="regex"  name="regex" value="<?php echo isset($_GET['regex']) ? htmlspecialchars($_GET['regex']) : ''; ?>" style="width: 60%; padding: 8px; margin-left: 10px;">
+                <button type="submit">Szukaj</button>
+            </form>
+
+
+            <p class="sort">Sortuj według:
+                <a href="?sort=title">Tytułu</a> |
+                <a href="?sort=priority">Priorytetu</a> |
+                <a href="?sort=date">Daty</a> |
+                <a href="?sort=category">Kategorii</a>
+            </p>
+
+        </div>
+
 
         <div class="task-container">
             <?php foreach ($tasks as $key => $task): ?>
                 <div class="task-card">
-                    <form method="POST">
-                        <button type="submit" name="delete_task" value="<?php echo $key; ?>">&times;</button>
+                    <form method="POST" onsubmit="return confirm('Czy na pewno chcesz to wykonac?');">
+                        <button type="submit" name="delete_task" value="<?php echo $key; ?>" class="delete-button">&times;</button>
+                        <button type="button" class="edit-button">=</button>
                     </form>
+
                     <h3><?php echo $task['title']; ?></h3>
                     <div class="badge"><?php echo $task['category']; ?></div>
-                    <p><?php echo $task['description']; ?></p>
+                    <p><?php echo formatTaskDescription($task['description']); ?></p>
 
                     <div class="section">
                         <p><strong>Data:</strong> <?php echo $task['date']; ?></p>
@@ -387,6 +361,17 @@ if (in_array($sortBy, $allowedSortFields)) {
                         </div>
                     </div>
 
+                    <?php if (!empty($task['tags'])): ?>
+                        <div class="section">
+                            <strong>Tagi:</strong>
+                            <div class="resource-list">
+                                <?php foreach ($task['tags'] as $tag): ?>
+                                    <span><?php echo htmlspecialchars($tag); ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="footer">
                         <div class="priority"><?php echo $task['priority']; ?></div>
                         <div class="status"><?php echo $task['status']; ?></div>
@@ -399,3 +384,4 @@ if (in_array($sortBy, $allowedSortFields)) {
 
 </body>
 </html>
+
