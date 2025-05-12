@@ -1,6 +1,36 @@
 <?php
 session_start();
 
+// Zapisywanie zadania
+$csvFile = 'tasks.csv';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_csv'])) {
+    createBackup($csvFile);
+    saveTasksToCSV($_SESSION['tasks'], $csvFile);
+    echo "<p class='save-true'>Zadania zostały zapisane do pliku CSV.</p>";
+}
+
+// Importowanie zadania
+if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
+    $file = $_FILES['csv_file'];
+
+    if ($file['error'] === UPLOAD_ERR_OK) {
+        $tmpPath = $file['tmp_name'];
+        $importedTasks = loadTasksFromCSV($tmpPath);
+
+        if (!empty($importedTasks)) {
+            createBackup($csvFile);
+            $_SESSION['tasks'] = $importedTasks;
+            saveTasksToCSV($importedTasks, $csvFile);
+            echo "<p class='save-true'>Import zakończony sukcesem.</p>";
+        } else {
+            echo "<p class='save-false''>Importowany plik jest pusty lub nieprawidłowy.</p>";
+        }
+    } else {
+        echo "<p class='save-false'>Błąd podczas przesyłania pliku.</p>";
+    }
+}
+
+
 // Inicjalizacja tablicy zadań, jeśli jeszcze nie istnieje w sesji
 if (!isset($_SESSION['tasks'])) {
     $_SESSION['tasks'] = array();
@@ -180,6 +210,63 @@ function formatTaskDescription($description) {
 
     return $description;
 }
+
+// Zapisywane taska do pliku csv
+function saveTasksToCSV($tasks, $filename)
+{
+    if(($fp = fopen($filename, 'w')) !== false) {
+        foreach ($tasks as $task) {
+
+            $task['resources'] = implode('|', $task['resources']);
+            $task['tags'] = implode('|', $task['tags']);
+
+            fputcsv($fp, $task);
+        }
+        fclose($fp);
+    }else{
+        error_log('Unable to open file ' . $filename);
+    }
+
+}
+
+// Wczytywanie taska do pliku csv
+function loadTasksFromCSV($filename) {
+    $tasks = [];
+    if (!file_exists($filename)) return $tasks;
+
+    if (($fp = fopen($filename, 'r')) !== false) {
+        while (($data = fgetcsv($fp)) !== false) {
+            // Walidacja liczby kolumn
+            if (count($data) >= 10) {
+                $tasks[] = [
+                    'title' => htmlspecialchars($data[0]),
+                    'category' => htmlspecialchars($data[1]),
+                    'description' => htmlspecialchars($data[2]),
+                    'priority' => htmlspecialchars($data[3]),
+                    'status' => htmlspecialchars($data[4]),
+                    'date' => htmlspecialchars($data[5]),
+                    'time' => htmlspecialchars($data[6]),
+                    'location' => htmlspecialchars($data[7]),
+                    'assigned' => htmlspecialchars($data[8]),
+                    'resources' => explode('|', $data[9]),
+                    'tags' => isset($data[10]) ? explode('|', $data[10]) : []
+                ];
+            }
+        }
+        fclose($fp);
+    } else {
+        error_log("Nie można odczytać pliku: $filename");
+    }
+
+    return $tasks;
+}
+
+function createBackup($filename) {
+    if (file_exists($filename)) {
+        $backupName = 'backup_' . date('Y-m-d_H-i-s') . '.csv';
+        copy($filename, $backupName);
+    }
+}
 ?>
 
 
@@ -273,7 +360,19 @@ function formatTaskDescription($description) {
             </div>
 
             <button class="button-left" type="submit">Dodaj zadanie</button>
+
         </form>
+
+        <form method="post" enctype="multipart/form-data">
+            <label>Importuj CSV:
+                <div class="imnport-cl">
+                    <input type="file" name="csv_file" accept=".csv" required>
+                    <button type="submit" name="import_csv">Importuj zadania</button>
+                </div>
+            </label>
+
+        </form>
+
     </div>
 
 
@@ -338,7 +437,14 @@ function formatTaskDescription($description) {
                 <div class="task-card">
                     <form method="POST" onsubmit="return confirm('Czy na pewno chcesz to wykonac?');">
                         <button type="submit" name="delete_task" value="<?php echo $key; ?>" class="delete-button">&times;</button>
+                    </form>
+
+                    <form>
                         <button type="button" class="edit-button">=</button>
+                    </form>
+
+                    <form form method="POST" onsubmit="return confirm('Czy na pewno chcesz to wykonac?');">
+                        <button  type="submit" name="save_csv" class="save-button">+</button>
                     </form>
 
                     <h3><?php echo $task['title']; ?></h3>
