@@ -220,7 +220,8 @@ function saveTasksToCSV($tasks, $filename)
             $task['resources'] = implode('|', $task['resources']);
             $task['tags'] = implode('|', $task['tags']);
 
-            fputcsv($fp, $task);
+            fputcsv($fp, $task, ',', '"', '\\');
+
         }
         fclose($fp);
     }else{
@@ -235,7 +236,7 @@ function loadTasksFromCSV($filename) {
     if (!file_exists($filename)) return $tasks;
 
     if (($fp = fopen($filename, 'r')) !== false) {
-        while (($data = fgetcsv($fp)) !== false) {
+        while (($data = fgetcsv($fp, 0, ',', '"', '\\')) !== false) { // Zaktualizowane wywołanie fgetcsv
             // Walidacja liczby kolumn
             if (count($data) >= 10) {
                 $tasks[] = [
@@ -261,12 +262,21 @@ function loadTasksFromCSV($filename) {
     return $tasks;
 }
 
+
 function createBackup($filename) {
+    $backupFolder = 'backups'; // Lokalizacja folderu kopii zapasowych
+
+    // Sprawdzenie, czy folder istnieje - jeśli nie, utwórz go
+    if (!is_dir($backupFolder)) {
+        mkdir($backupFolder, 0777, true); // 0777 daje pełne uprawnienia do nowego folderu
+    }
+
     if (file_exists($filename)) {
-        $backupName = 'backup_' . date('Y-m-d_H-i-s') . '.csv';
+        $backupName = $backupFolder . '/backup_' . date('Y-m-d_H-i-s') . '.csv';
         copy($filename, $backupName);
     }
 }
+
 ?>
 
 
@@ -490,4 +500,3 @@ function createBackup($filename) {
 
 </body>
 </html>
-
