@@ -1,3 +1,5 @@
+
+
 * {
     font-family: 'Inter', sans-serif;
     box-sizing: border-box;
@@ -336,5 +338,108 @@ input.wyszukaj {
     margin: 10px;
     margin-left: 0;
 }
+
+header {
+    width: 100%;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+    font-weight: bold;
+}
+
+.search-box {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.search-box input {
+    width: 300px;
+    padding: 10px 10px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    outline: none;
+}
+
+.user-name {
+    font-weight: bold;
+    color: #333;
+}
+
+.avatar {
+    background-color: #e0e7ff;
+    color: #3b82f6;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.user-info {
+    position: relative; /* Aby rozwijane menu było powiązane z tym elementem */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 60px; /* Pozycjonowanie pod nagłówkiem */
+    right: 40px; /* Wyrównanie po prawej */
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 10px 0;
+    display: none; /* Domyślnie ukryte */
+    z-index: 1000;
+    width: 150px;
+}
+
+.dropdown-menu a,
+.dropdown-menu button {
+    display: block;
+    padding: 10px 20px;
+    text-align: left;
+    text-decoration: none;
+    color: #333;
+    background: none;
+    border: none;
+    width: 100%;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.dropdown-menu a:hover,
+.dropdown-menu button:hover {
+    background-color: #f3f4f6;
+}
+
+.custom-logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+
+.custom-logo-link {
+    text-decoration: none;
+    color: #2c3f50;
+    font-family: 'Inter', sans-serif;
+}
+
+
 
 

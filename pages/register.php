@@ -1,5 +1,7 @@
 <?php
-require 'config.php';
+
+require_once __DIR__ . '/../public_config.php';
+
 
 $error = '';
 $success = '';
@@ -52,34 +54,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="pl">
-    <head>
-        <meta charset="UTF-8">
-        <title>Rejestracja</title>
-        <link rel="stylesheet" href="css/auth.css">
-    </head>
-    <body>
-        <div class="box">
-            <h2>Rejestracja</h2>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rejestracja</title>
+    <link rel="stylesheet" href="../css/auth.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
 
-                <?php if ($success): ?>
-                    <div class="success"><?= $success ?></div>
-                <?php elseif ($error): ?>
-                    <div class="error"><?= $error ?></div>
-                <?php endif; ?>
+<!-- Header wczytany za pomocą include -->
+<?php include '../includes/auth_header.php'; ?>
 
-            <form method="post">
-                <div class="name-row">
-                    <input type="text" name="first_name" placeholder="Imię" required>
-                    <input type="text" name="last_name" placeholder="Nazwisko" required>
-                </div>
+<!-- Wyśrodkowany box rejestracji -->
+<main class="centered-container">
+    <div class="box">
+        <h2>Rejestracja</h2>
 
-                <input type="number" name="year" placeholder="Rok urodzenia (np. 2000)" required>
-                <input type="email" name="email" placeholder="Email" required>
-                <input type="password" name="password" placeholder="Hasło (min. 6 znaków)" required>
-                <input type="password" name="confirm" placeholder="Potwierdź hasło" required>
-                <button type="submit">Zarejestruj się</button>
-            </form>
-            <a href="login.php">Masz już konto? Zaloguj się</a>
-        </div>
-    </body>
+        <?php if ($success): ?>
+            <div class="success"><?= $success ?></div>
+        <?php elseif ($error): ?>
+            <div class="error"><?= $error ?></div>
+        <?php endif; ?>
+
+        <form method="post">
+            <div class="name-row">
+                <input type="text" name="first_name" placeholder="Imię" required>
+                <input type="text" name="last_name" placeholder="Nazwisko" required>
+            </div>
+
+            <input type="number" name="year" placeholder="Rok urodzenia (np. 2000)" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Hasło (min. 6 znaków)" required>
+            <input type="password" name="confirm" placeholder="Potwierdź hasło" required>
+            <button type="submit">Zarejestruj się</button>
+        </form>
+        <a class="linka" href="login.php">Masz już konto? Zaloguj się</a>
+    </div>
+</main>
+
+</body>
 </html>
+

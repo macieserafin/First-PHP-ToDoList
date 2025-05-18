@@ -3,8 +3,8 @@
 // Zapisywane taska do pliku csv
 function saveTasksToCSV($tasks, $taskTitle)
 {
-    // Ścieżka do folderu 'saved tasks'
-    $folder = 'saved tasks';
+    // Ścieżka do folderu 'storage'
+    $folder = 'storage';
 
     // Jeśli folder nie istnieje, utwórz go
     if (!is_dir($folder)) {

@@ -1,24 +1,86 @@
-/* Najładniejszy CSS - styl luksusowo-nowoczesny */
-
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400;600&display=swap');
-
+/* Ogólny reset stylów */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
+/* Strona i tło */
 body {
     font-family: 'Inter', sans-serif;
-    background: #f5f5f5;
+    background: #f4f6f8;
+    color: #2c3f50;
     min-height: 100vh;
     display: flex;
-    justify-content: center;
+    flex-direction: column; /* Ustaw header na górze, potem reszta */
+}
+
+/* Dla headera */
+.custom-header {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    padding: 20px 40px;
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+}
+
+.custom-logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+
+.custom-logo-link {
+    text-decoration: none;
+    color: #2c3f50;
+    font-family: 'Inter', sans-serif;
+}
+
+.custom-auth {
+    display: flex;
+    align-items: center;
+}
+
+.custom-login {
+    margin-right: 20px;
+    color: #3d5873;
+    font-size: 16px;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.custom-login:hover {
     color: #2c3f50;
 }
 
+.custom-register {
+    background-color: #2c3f50;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    text-decoration: none;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.custom-register:hover {
+    background-color: #1c2935;
+    transform: scale(1.05);
+}
+
+/* Główna sekcja - wyśrodkowanie formularza rejestracji */
+.centered-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1; /* Zabierz pozostałą przestrzeń poniżej headera */
+    padding: 20px;
+}
+
+/* Stylizacja boxa z formularzem */
 .box {
     background-color: white;
     padding: 40px;
@@ -37,9 +99,9 @@ h2 {
     font-size: 28px;
     text-align: center;
     margin-bottom: 30px;
-    color: #2c3f50;
 }
 
+/* Formularz */
 form {
     display: flex;
     flex-direction: column;
@@ -48,7 +110,7 @@ form {
 input {
     padding: 14px 16px;
     margin-bottom: 18px;
-    border: 1px solid #ccc;
+    border: 1px solid #c3ccd4;
     border-radius: 12px;
     font-size: 16px;
     transition: border-color 0.2s;
@@ -56,7 +118,7 @@ input {
 }
 
 input:focus {
-    border-color: #b89b72;
+    border-color: #3d5873;
     outline: none;
 }
 
@@ -77,7 +139,8 @@ button:hover {
     transform: translateY(-1px);
 }
 
-a {
+/* Linki */
+.linka{
     text-align: center;
     display: block;
     margin-top: 20px;
@@ -87,11 +150,12 @@ a {
     transition: color 0.2s;
 }
 
-a:hover {
-    color: #1c1a18;
+.linka a:hover {
+    color: #1c2935;
     text-decoration: underline;
 }
 
+/* Wiadomości sukces i błędów */
 .success, .error {
     text-align: center;
     padding: 12px;
@@ -101,16 +165,16 @@ a:hover {
 }
 
 .success {
-    background-color: #e2f7e9;
-    color: #207d47;
+    background-color: #e4f1f9;
+    color: #2c3f50;
 }
 
 .error {
-    background-color: #fdecea;
-    color: #c0392b;
+    background-color: #f0f4f7;
+    color: #2c3f50;
 }
 
-
+/* Wiersz imienia i nazwiska */
 .name-row {
     display: flex;
     gap: 16px;
