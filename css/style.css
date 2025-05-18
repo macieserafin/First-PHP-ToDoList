@@ -1,0 +1,340 @@
+* {
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: #f5f5f5;
+}
+
+h1 {
+    text-align: center;
+    color: #2c3f50;
+    margin-top: 30px;
+}
+
+h1::after {
+    content: "";
+    display: block;
+    width: 50px;
+    height: 3px;
+    background-color: #2c3f50;
+    margin: 5px auto 0;
+}
+
+.main-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 30px;
+    margin: 40px;
+}
+
+.form-container,
+.tasks-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    max-width: 800px;
+}
+
+.form-container {
+    width: 400px;
+}
+
+.tasks-container {
+    flex: 1;
+    min-width: 500px;
+}
+
+.line {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.line label {
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+}
+
+textarea {
+    width: 100%;
+    height: 90px;
+    resize: none;
+}
+
+input,
+select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #2c3f50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #41607d;
+}
+
+.zasoby {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.zasoby label {
+    font-weight: normal;
+}
+
+.sort {
+}
+
+.sort a {
+    text-decoration: none;
+    color: #2c3f50;
+    margin-right: 10px;
+}
+
+.task-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.task-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: calc(50% - 10px);
+}
+
+.task-card h3 {
+    margin: 0;
+    font-size: 20px;
+    color: #2c3f50;
+}
+
+.task-card .badge {
+    background-color: #eef1f6;
+    color: #2c3f50;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    width: fit-content;
+}
+
+.task-card p {
+    margin: 0;
+    color: #000000;
+}
+
+.task-card .section {
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+}
+
+.task-card .resource-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.delete-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(209, 20, 20, 0.81);
+    border: none;
+    color: white;
+    font-size: 20px;
+    padding: 5px 10px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.task-card .resource-list span {
+    background-color: #eef1f6;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.task-card .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.task-card .priority {
+    background-color: #fef3c7;
+    color: #92400e;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.task-card .status {
+    background-color: #e0e7ff;
+    color: #3730a3;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+
+
+.tag {
+    background-color: #e0f0ff;
+    color: #007acc;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.highlight.date {
+    color: #c0392b;
+    font-weight: bold;
+}
+
+.highlight.time {
+    color: #2980b9;
+    font-weight: bold;
+}
+
+.highlight.phone {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.filter-form-content{
+    width: 100px;
+    height: 35px;
+}
+
+.button-left
+{
+    margin-top: 20px;
+}
+
+
+.edit-button {
+    position: absolute;
+    top: 10px;
+    right: 50px;
+    background: rgb(44, 63, 80);
+    border: none;
+    color: white;
+    font-size: 20px;
+    padding: 5px 10px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.save-button {
+    position: absolute;
+    top: 10px;
+    right: 90px;
+    background: rgb(20, 92, 0);
+    border: none;
+    color: white;
+    font-size: 20px;
+    padding: 5px 10px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* Styl modala */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    width: 50%;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#editForm label {
+    display: block;
+    margin: 10px 0;
+}
+
+#editForm input,
+#editForm select,
+#editForm textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.filtry{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+input.wyszukaj {
+    width: 500px !important;
+    margin-top: 10px !important;
+}
+
+.button-right{
+
+}
+
+.imnport-cl button
+{
+    margin: 10px;
+    margin-left: 0;
+}
+
+
