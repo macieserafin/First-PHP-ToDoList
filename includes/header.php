@@ -21,9 +21,9 @@ if (isset($_SESSION['user'])) {
 
     <div class="title">Dashboard</div>
 
-    <div class="user-info">
-        <span class="user-name" onclick="toggleMenu()"><?= $user_name ?></span>
-        <div class="avatar"><?= $initials ?></div>
+    <div   onclick="toggleMenu()" class="user-info">
+        <span class="user-name"><?= $user_name ?></span>
+        <div class="avatar"  ><?= $initials ?></div>
 
         <!-- Rozwijane menu -->
         <div class="dropdown-menu" id="userDropdown">
@@ -35,25 +35,3 @@ if (isset($_SESSION['user'])) {
     </div>
 </header>
 
-<script>
-    // Funkcja do przełączania widoczności menu
-    function toggleMenu() {
-        const dropdown = document.getElementById('userDropdown');
-        if (dropdown.style.display === 'block') {
-            dropdown.style.display = 'none';
-        } else {
-            dropdown.style.display = 'block';
-        }
-    }
-
-    // Ukryj menu, jeśli użytkownik kliknie poza elementem
-    document.addEventListener('click', function (event) {
-        const dropdown = document.getElementById('userDropdown');
-        const userInfo = document.querySelector('.user-info');
-
-        // Jeśli kliknięcie jest poza user-info lub dropdown-menu, ukryj menu
-        if (!userInfo.contains(event.target)) {
-            dropdown.style.display = 'none';
-        }
-    });
-</script>

@@ -3,8 +3,10 @@
 // Zapisywane taska do pliku csv
 function saveTasksToCSV($tasks, $taskTitle)
 {
+    global $feedback;
+
     // Ścieżka do folderu 'storage'
-    $folder = 'storage';
+    $folder = '../storage';
 
     // Jeśli folder nie istnieje, utwórz go
     if (!is_dir($folder)) {
@@ -26,15 +28,19 @@ function saveTasksToCSV($tasks, $taskTitle)
             fputcsv($fp, $task, ',', '"', '\\');
         }
         fclose($fp);
-        echo "Zapisano plik: $filename"; // Informacja zwrotna
+        $feedback = "Zapisano plik: $filename"; // Informacja zwrotna
+        $feedback = "<p class='feedback'>Zapisano plik: $filename</p>"; // Informacja zwrotna
     } else {
-        error_log("Nie można otworzyć pliku: $filename");
+        error_log($feedback = "<p class='feedback'>Nie można otworzyć pliku: $filename"); // Informacja zwrotna);
     }
 }
 
 
 // Wczytywanie taska do pliku csv
 function loadTasksFromCSV($filename) {
+    global $feedback;
+
+
     $tasks = [];
     if (!file_exists($filename)) return $tasks;
 
@@ -67,7 +73,7 @@ function loadTasksFromCSV($filename) {
 
 
 function createBackup($filename) {
-    $backupFolder = 'backups'; // Lokalizacja folderu kopii zapasowych
+    $backupFolder = '../backups'; // Lokalizacja folderu kopii zapasowych
 
     // Sprawdzenie, czy folder istnieje - jeśli nie, utwórz go
     if (!is_dir($backupFolder)) {

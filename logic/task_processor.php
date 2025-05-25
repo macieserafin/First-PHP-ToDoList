@@ -1,7 +1,14 @@
 <?php
 
+
+$feedback = '';
+$attachmentDirectory = '../uploads/';
+$attachments = [];
+
+
 // Zapisywanie zadania
 $csvFile = 'tasks.csv';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_csv'])) {
     createBackup($csvFile); // Tworzenie kopii zapasowej starego pliku (jeśli potrzebne)
 
@@ -18,20 +25,25 @@ if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
 
     if ($file['error'] === UPLOAD_ERR_OK) {
         $tmpPath = $file['tmp_name'];
-        $importedTasks = loadTasksFromCSV($tmpPath);
+        $importedTasks = loadTasksFromCSV($tmpPath); // Funkcja ładowania
 
         if (!empty($importedTasks)) {
-            createBackup($csvFile);
+            createBackup($csvFile); // Tworzenie kopii zapasowej
+            // Import zadań do sesji
+            if (!isset($_SESSION['tasks'])) {
+                $_SESSION['tasks'] = [];
+            }
             $_SESSION['tasks'] = array_merge($_SESSION['tasks'], $importedTasks);
-            saveTasksToCSV($importedTasks, $csvFile);
-            echo "<p class='save-true'>Import zakończony sukcesem.</p>";
+            saveTasksToCSV($_SESSION['tasks'], $csvFile); // Funkcja zapisu
+            $feedback = "<p class='feedback'>Import zakończony sukcesem.</p>";
         } else {
-            echo "<p class='save-false'>Importowany plik jest pusty lub nieprawidłowy.</p>";
+            $feedback = "<p class='feedback'>Importowany plik jest pusty lub nieprawidłowy.</p>";
         }
     } else {
-        echo "<p class='save-false'>Błąd podczas przesyłania pliku.</p>";
+        $feedback = "<p class='feedback'>Błąd podczas przesyłania pliku.</p>";
     }
 }
+
 
 
 // Inicjalizacja tablicy zadań, jeśli jeszcze nie istnieje w sesji
@@ -42,86 +54,114 @@ if (!isset($_SESSION['tasks'])) {
 $tasks = $_SESSION['tasks'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $errors = array();
-
     // Obsługa usuwania zadania
     if (isset($_POST['delete_task'])) {
         $taskIndex = $_POST['delete_task'];
-        if (isset($tasks[$taskIndex])) {
-            unset($tasks[$taskIndex]);
-            $_SESSION['tasks'] = array_values($tasks); // Przebudowanie indeksów
+        if (isset($_SESSION['tasks'][$taskIndex])) {
+            unset($_SESSION['tasks'][$taskIndex]); // Usuń zadanie
+            $_SESSION['tasks'] = array_values($_SESSION['tasks']); // Przebuduj indeksy
         }
         header('Location: ' . $_SERVER['PHP_SELF']);
         exit;
     }
 
-    // Pobieranie i czyszczenie danych z formularza
-    $title = trim(isset($_POST['title']) ? $_POST['title'] : '');
-    $category = trim(isset($_POST['category']) ? $_POST['category'] : '');
-    $description = trim(isset($_POST['description']) ? $_POST['description'] : '');
-    $priority = trim(isset($_POST['priority']) ? $_POST['priority'] : '');
-    $status = trim(isset($_POST['status']) ? $_POST['status'] : '');
-    $date = trim(isset($_POST['date']) ? $_POST['date'] : '');
-    $time = trim(isset($_POST['time']) ? $_POST['time'] : '');
-    $location = trim(isset($_POST['location']) ? $_POST['location'] : '');
-    $assigned = trim(isset($_POST['assigned']) ? $_POST['assigned'] : '');
-    $tags = trim(isset($_POST['tags']) ? $_POST['tags'] : '');
+    // Obsługa dodawania zadania
+    if (isset($_POST['add_task']))
+    {
+        $errors = [];
 
-    // Rozdzielenie tagów po białych znakach
-    $tagsArray = preg_split('/\s+/', $tags, -1, PREG_SPLIT_NO_EMPTY);
+        // Pobieranie i czyszczenie danych z formularza
+        $title = trim(isset($_POST['title']) ? $_POST['title'] : '');
+        $category = trim(isset($_POST['category']) ? $_POST['category'] : '');
+        $description = trim(isset($_POST['description']) ? $_POST['description'] : '');
+        $priority = trim(isset($_POST['priority']) ? $_POST['priority'] : '');
+        $status = trim(isset($_POST['status']) ? $_POST['status'] : '');
+        $date = trim(isset($_POST['date']) ? $_POST['date'] : '');
+        $time = trim(isset($_POST['time']) ? $_POST['time'] : '');
+        $location = trim(isset($_POST['location']) ? $_POST['location'] : '');
+        $assigned = trim(isset($_POST['assigned']) ? $_POST['assigned'] : '');
+        $tags = trim(isset($_POST['tags']) ? $_POST['tags'] : '');
 
-    // Filtrowanie tablicy resources, z zabezpieczeniem przed HTML-injection
-    $resources = isset($_POST['resources']) ? array_map('htmlspecialchars', $_POST['resources']) : array();
+        // Rozdzielenie tagów po białych znakach
+        $tagsArray = preg_split('/\s+/', $tags, -1, PREG_SPLIT_NO_EMPTY);
 
-    // Walidacja wymaganych pól
-    if ($title === '') $errors[] = "Tytuł zadania jest wymagany.";
-    if ($category === '') $errors[] = "Kategoria zadania jest wymagana.";
-    if ($priority === '') $errors[] = "Priorytet zadania jest wymagany.";
+        // Filtrowanie tablicy resources, z zabezpieczeniem przed HTML-injection
+        $resources = isset($_POST['resources']) ? array_map('htmlspecialchars', $_POST['resources']) : array();
 
-    // Walidacja daty za pomocą wyrażenia regularnego
-    if ($date === '') {
-        $errors[] = "Data wykonania jest wymagana.";
-    } else {
-        if (!preg_match("/^\d{4}-\d{2}-\d{2}$/", $date)) {
-            // ^\d{4}-\d{2}-\d{2}$ - data w formacie RRRR-MM-DD
-            $errors[] = "Data wykonania musi być w formacie RRRR-MM-DD.";
-        }
-    }
+        // Walidacja wymaganych pól
+        if ($title === '') $errors[] = "Tytuł zadania jest wymagany.";
+        if ($category === '') $errors[] = "Kategoria zadania jest wymagana.";
+        if ($priority === '') $errors[] = "Priorytet zadania jest wymagany.";
 
-    // Walidacja tagów
-    if (!empty($tags)) {
-        foreach ($tagsArray as $tag) {
-            if (!preg_match("/^[a-zA-Z0-9_]+$/", $tag)) {
-                // ^[a-zA-Z0-9_]+$ - tylko litery, cyfry i podkreślniki
-                $errors[] = "Tagi mogą zawierać tylko litery, cyfry i podkreślniki.";
-                break;
+        // Walidacja daty za pomocą wyrażenia regularnego
+        if ($date === '') {
+            $errors[] = "Data wykonania jest wymagana.";
+        } else {
+            if (!preg_match("/^\d{4}-\d{2}-\d{2}$/", $date)) {
+                // ^\d{4}-\d{2}-\d{2}$ - data w formacie RRRR-MM-DD
+                $errors[] = "Data wykonania musi być w formacie RRRR-MM-DD.";
             }
         }
-    }
 
-    // Jeśli brak błędów, dodaj zadanie
-    if (empty($errors)) {
-        $newTask = array(
-            'title' => htmlspecialchars($title),
-            'category' => htmlspecialchars($category),
-            'description' => htmlspecialchars($description),
-            'priority' => htmlspecialchars($priority),
-            'status' => htmlspecialchars($status),
-            'date' => htmlspecialchars($date),
-            'time' => htmlspecialchars($time),
-            'location' => htmlspecialchars($location),
-            'assigned' => htmlspecialchars($assigned),
-            'resources' => $resources,
-            'tags' => $tagsArray
-        );
-        $tasks[] = $newTask;
-        $_SESSION['tasks'] = $tasks;
-        header('Location: ' . $_SERVER['PHP_SELF']);
-        exit;
-    } else {
-        $error = implode('<br>', $errors);
+        // Walidacja tagów
+        if (!empty($tags)) {
+            foreach ($tagsArray as $tag) {
+                if (!preg_match("/^[a-zA-Z0-9_]+$/", $tag)) {
+                    // ^[a-zA-Z0-9_]+$ - tylko litery, cyfry i podkreślniki
+                    $errors[] = "Tagi mogą zawierać tylko litery, cyfry i podkreślniki.";
+                    break;
+                }
+            }
+        }
+
+        if (isset($_FILES['attachments']) && count($_FILES['attachments']['name']) > 0) {
+            foreach ($_FILES['attachments']['name'] as $index => $fileName) {
+                $tmpFile = $_FILES['attachments']['tmp_name'][$index];
+                $error = $_FILES['attachments']['error'][$index];
+                $fileSize = $_FILES['attachments']['size'][$index];
+
+                if ($error === UPLOAD_ERR_OK && $fileSize > 0) {
+                    $safeFileName = uniqid() . '-' . basename($fileName); // Tworzenie unikalnej nazwy dla pliku
+                    if (move_uploaded_file($tmpFile, $attachmentDirectory . $safeFileName)) {
+                        $attachments[] = [
+                            'name' => htmlspecialchars($fileName), // Oryginalna nazwa pliku
+                            'url' => $attachmentDirectory . $safeFileName // Ścieżka do załącznika
+                        ];
+                    } else {
+                        $errors[] = "Nie udało się zapisać pliku: " . htmlspecialchars($fileName);
+                    }
+                } elseif ($error !== UPLOAD_ERR_NO_FILE) {
+                    $errors[] = "Błąd podczas przesyłania pliku: " . htmlspecialchars($fileName);
+                }
+            }
+        }
+
+        // Jeśli brak błędów, dodaj zadanie
+        if (empty($errors)) {
+            $newTask = [
+                'title' => htmlspecialchars($title),
+                'category' => htmlspecialchars($category),
+                'description' => htmlspecialchars($description),
+                'priority' => htmlspecialchars($priority),
+                'status' => htmlspecialchars($status),
+                'date' => htmlspecialchars($date),
+                'time' => htmlspecialchars($time),
+                'location' => htmlspecialchars($location),
+                'assigned' => htmlspecialchars($assigned),
+                'resources' => $resources,
+                'tags' => $tagsArray,
+                'attachments' => $attachments // Dodanie obsługi załączników do nowego zadania
+            ];
+            $tasks[] = $newTask;
+            $_SESSION['tasks'] = $tasks;
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit;
+        } else {
+            $error = implode('<br>', $errors);
+        }
     }
 }
+
 
 // Sortowanie
 $sortBy = isset($_GET['sort']) ? $_GET['sort'] : '';
