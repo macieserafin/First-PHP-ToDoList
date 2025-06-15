@@ -1,0 +1,186 @@
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: #f4f6f8;
+    color: #2c3f50;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2c3f50;
+}
+
+.nav a {
+    margin-right: 20px;
+    font-weight: 500;
+    color: #3d5873;
+}
+
+.auth .login {
+    margin-right: 20px;
+    color: #3d5873;
+}
+
+.auth .register {
+    background-color: #2c3f50;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.hero {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 60px 40px;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+}
+
+.hero-text {
+    max-width: 500px;
+    margin-right: 40px;
+}
+
+.hero-text h1 {
+    font-size: 40px;
+    margin-bottom: 20px;
+    color: #2c3f50;
+}
+
+
+.hero-text p {
+    font-size: 18px;
+    color: #5d6d7e;
+    margin-bottom: 30px;
+}
+
+.hero-buttons a.register.big {
+    background-color: #2c3f50;
+    color: white;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    margin-right: 20px;
+}
+
+.hero-buttons .login-link {
+    color: #2c3f50;
+    font-weight: 600;
+}
+
+.hero-image img {
+    width: 100%;
+    max-width: 500px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.features {
+    padding: 60px 40px;
+    text-align: center;
+    background-color: #f4f6f8;
+}
+
+.features h2 {
+    font-size: 32px;
+    margin-bottom: 40px;
+    color: #2c3f50;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 30px;
+}
+
+.feature {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.feature h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    color: #3d5873;
+}
+
+.feature p {
+    color: #5d6d7e;
+}
+
+/* CSS dla specjalnego nagłówka */
+
+.custom-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.custom-logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.custom-logo-link {
+    text-decoration: none;
+    color: #2c3f50;
+    font-family: 'Inter', sans-serif;
+}
+
+.custom-auth {
+    display: flex;
+    align-items: center;
+}
+
+.custom-login {
+    margin-right: 20px;
+    color: #3d5873;
+    font-size: 16px;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.custom-login:hover {
+    color: #2c3f50;
+}
+
+.custom-register {
+    background-color: #2c3f50;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    text-decoration: none;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.custom-register:hover {
+    background-color: #1c2935;
+    transform: scale(1.05);
+}
+

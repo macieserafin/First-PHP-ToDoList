@@ -1,0 +1,188 @@
+/* Ogólny reset stylów */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Strona i tło */
+body {
+    font-family: 'Inter', sans-serif;
+    background: #f4f6f8;
+    color: #2c3f50;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column; /* Ustaw header na górze, potem reszta */
+}
+
+/* Dla headera */
+.custom-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+}
+
+.custom-logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+
+.custom-logo-link {
+    text-decoration: none;
+    color: #2c3f50;
+    font-family: 'Inter', sans-serif;
+}
+
+.custom-auth {
+    display: flex;
+    align-items: center;
+}
+
+.custom-login {
+    margin-right: 20px;
+    color: #3d5873;
+    font-size: 16px;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.custom-login:hover {
+    color: #2c3f50;
+}
+
+.custom-register {
+    background-color: #2c3f50;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    text-decoration: none;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.custom-register:hover {
+    background-color: #1c2935;
+    transform: scale(1.05);
+}
+
+/* Główna sekcja - wyśrodkowanie formularza rejestracji */
+.centered-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1; /* Zabierz pozostałą przestrzeń poniżej headera */
+    padding: 20px;
+}
+
+/* Stylizacja boxa z formularzem */
+.box {
+    background-color: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    max-width: 420px;
+    width: 100%;
+    transition: transform 0.3s ease;
+}
+
+.box:hover {
+    transform: translateY(-4px);
+}
+
+h2 {
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* Formularz */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+input {
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    border: 1px solid #c3ccd4;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: border-color 0.2s;
+    background-color: #fafafa;
+}
+
+input:focus {
+    border-color: #3d5873;
+    outline: none;
+}
+
+button {
+    padding: 14px;
+    background-color: #2c3f50;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
+}
+
+button:hover {
+    background-color: #1c2935;
+    transform: translateY(-1px);
+}
+
+/* Linki */
+.linka{
+    text-align: center;
+    display: block;
+    margin-top: 20px;
+    color: #2c3f50;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.linka a:hover {
+    color: #1c2935;
+    text-decoration: underline;
+}
+
+/* Wiadomości sukces i błędów */
+.success, .error {
+    text-align: center;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+.success {
+    background-color: #e4f1f9;
+    color: #2c3f50;
+}
+
+.error {
+    background-color: #f0f4f7;
+    color: #2c3f50;
+}
+
+/* Wiersz imienia i nazwiska */
+.name-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.name-row input {
+    flex: 1;
+    margin-bottom: 0;
+    width: 50%;
+}
