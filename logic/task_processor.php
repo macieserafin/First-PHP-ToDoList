@@ -57,6 +57,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors = $taskManager->addTask($_POST, $_FILES);
     }
 
+    if (isset($_POST['mark_done'])) {
+        $taskId = $_POST['mark_done'];
+
+        $userEmail = is_array($_SESSION['user']) ? $_SESSION['user']['email'] : $_SESSION['user'];
+        $csvHandler = new CsvHandler();
+        $taskManager = new TaskManager($csvHandler, $userEmail);
+
+        $tasks = $taskManager->getTasks();
+
+        if (isset($tasks[$taskId])) {
+            $tasks[$taskId]['status'] = 'Zakończone';
+            $csvHandler->saveTasksToCSV($tasks, $userEmail);  // ✅ poprawna metoda
+        }
+
+        header("Location: ../pages/dashboard.php");
+        exit;
+    }
+
+
+
     if (isset($_POST['delete_task'])) {
         $taskManager->deleteTask($_POST['delete_task']);
     }

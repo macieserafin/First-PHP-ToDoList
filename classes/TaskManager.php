@@ -111,4 +111,19 @@ class TaskManager
             $this->csvHandler->saveTasksToCSV($_SESSION['tasks'], $this->userEmail);
         }
     }
+
+    public function getUpcomingTasks($daysAhead = 3)
+    {
+        $today = new DateTime();
+        $limit = (clone $today)->modify("+$daysAhead days");
+
+        return array_filter($this->getTasks(), function ($task) use ($today, $limit) {
+            if (empty($task['date'])) return false;  // <- UWAGA: używamy 'date', nie 'due_date'
+
+            $due = DateTime::createFromFormat('Y-m-d', $task['date']);
+            if (!$due) return false;
+
+            return $due >= $today && $due <= $limit;
+        });
+    }
 }

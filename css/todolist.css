@@ -59,6 +59,53 @@ h1::after {
     max-width: 800px;
 }
 
+.notifications-container
+{
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    max-width: 800px;
+}
+
+.notifications-container {
+    background: rgba(193, 205, 255, 0.11);
+    border: 1px solid #bdc6ff;
+    padding: 1em;
+    margin: 1em 0;
+    border-radius: 8px;
+}
+
+.notifications-container h2 {
+    margin-top: 0;
+    font-size: 1.2em;
+}
+
+.notifications-container ul {
+    list-style: none;
+    padding: 0;
+}
+
+.notifications-container li {
+    padding: 0.3em 0;
+}
+
+.complete-button {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 2px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 4px;
+    font-weight: bold;
+
+}
+
+.notifications-container h2{
+    margin-top: 0;
+}
+
 .welcome-container h2 {
     margin-bottom: 5px;
 }
@@ -448,6 +495,13 @@ input.wyszukaj {
 
 .imnport-cl{
     margin-top: 10px;
+}
+
+
+
+.task-card.done {
+    opacity: 0.6;
+    border: 1px solid #ccc;
 }
 
 header {

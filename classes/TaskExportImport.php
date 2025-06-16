@@ -58,7 +58,7 @@ class TaskExportImport
         fclose($output);
         exit;
     }
-    
+
     public function importTaskCSV(string $csvContent): array
     {
         $lines = preg_split('/\r\n|\n|\r/', trim($csvContent));

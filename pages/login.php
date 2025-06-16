@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ];
 
                 fclose($file);
-                header('Location: dashboard.php');
+                header('Location: cookie_consent.php');
                 exit;
             }
         }

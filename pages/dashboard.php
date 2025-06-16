@@ -10,10 +10,30 @@ if (!isset($_SESSION['user'])) {
     exit;
 }
 
+$email      = is_array($_SESSION['user']) ? $_SESSION['user']['email'] : $_SESSION['user'];
+$consentKey = 'allow_cookies_' . md5($email);
+$visitKey   = 'visit_count_' . md5($email);
+
+$cookieInfo = '';
+if (isset($_COOKIE[$consentKey]) && $_COOKIE[$consentKey] === 'true') {
+    // inkrementuj liczbę wejść przy każdym załadowaniu dashboardu
+    $visitCount = isset($_COOKIE[$visitKey])
+        ? (int)$_COOKIE[$visitKey] + 1
+        : 1;
+    setcookie($visitKey, $visitCount, time() + (365 * 24 * 60 * 60), "/");
+
+    $cookieInfo = "🔢 Ilość wejść na stronę: <strong>$visitCount</strong>";
+}
+elseif (isset($_COOKIE[$consentKey]) && $_COOKIE[$consentKey] === 'false') {
+    $cookieInfo = "❌ Nie zezwoliłeś na ciasteczka.";
+}
+
 $userEmail = is_array($_SESSION['user']) ? $_SESSION['user']['email'] : $_SESSION['user'];
 $csvHandler = new CsvHandler();
 $taskManager = new TaskManager($csvHandler, $userEmail);
 $tasks = $taskManager->getTasks();
+$unfinishedTasks = array_filter($tasks, fn($t) => $t['status'] !== 'Zakończone');
+$doneTasks       = array_filter($tasks, fn($t) => $t['status']   === 'Zakończone');
 $_SESSION['tasks'] = $tasks;
 
 
@@ -42,6 +62,22 @@ $motivation = $quotes[array_rand($quotes)];
 $total = count($tasks);
 $done = count(array_filter($tasks, fn($t) => $t['status'] === 'Zakończone'));
 $progress = $total > 0 ? round(($done / $total) * 100) : 0;
+
+
+$today = new DateTime();
+$tomorrow = (new DateTime())->modify('+1 day');
+
+$tasksDueSoon = array_filter($unfinishedTasks, function ($task) use ($today, $tomorrow) {
+    if (empty($task['date'])) return false;
+    $taskDate = DateTime::createFromFormat('Y-m-d', $task['date']);
+    return $taskDate >= $today && $taskDate <= $tomorrow;
+});
+
+$tasksDueSoonCount = count($tasksDueSoon);
+
+$upcomingTasks = $taskManager->getUpcomingTasks(3); // pokaż zadania na dziś i 2 kolejne dni
+
+
 ?>
 
 
@@ -158,6 +194,29 @@ $progress = $total > 0 ? round(($done / $total) * 100) : 0;
             </div>
         </div>
 
+        <div class="notifications-container">
+            <h2>Powiadomienia:</h2>
+            <?php if (empty($upcomingTasks)): ?>
+                <p>Brak nadchodzących zadań 🎉</p>
+            <?php else: ?>
+                <ul>
+                    <?php foreach ($upcomingTasks as $task): ?>
+                        <?php
+                        $due = DateTime::createFromFormat('Y-m-d', $task['date']);
+                        $today = new DateTime();
+                        $diff = $due ? $today->diff($due)->days : '?';
+                        ?>
+                        <li>
+                            🔔 <strong><?= htmlspecialchars($task['title']) ?></strong>
+                            — za <?= $diff ?> dni (<em><?= htmlspecialchars($task['date']) ?></em>)
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </div>
+
+
+
     </div>
 
 
@@ -170,9 +229,24 @@ $progress = $total > 0 ? round(($done / $total) * 100) : 0;
                 📋 Wszystkich zadań: <strong><?php echo count($tasks); ?></strong><br>
                 ⏳ Do zrobienia: <strong style="color: #e67e22;"><?php echo count($unfinished); ?></strong>
             </p>
+
+            <p style="margin-top: 10px; color: #444; font-size: 15px;">
+                <?= $cookieInfo ?>
+            </p>
+
             <p style="margin-top: 10px; font-style: italic; color: #555;">
                 💡 <span><?php echo $motivation; ?></span>
             </p>
+
+            <?php if ($tasksDueSoonCount > 0): ?>
+                <p style="margin-top: 10px; font-weight: bold;">
+                    ⏱️ Masz <strong><?php echo $tasksDueSoonCount; ?></strong> zadań do zrobienia do jutra!
+                </p>
+            <?php else: ?>
+                <p style="margin-top: 10px; color: green;">
+                    ✅ Nie masz żadnych pilnych zadań do jutra!
+                </p>
+            <?php endif; ?>
 
             <div class="progress-bar">
                 <div class="progress" style="width: <?= $progress ?>%;"><?= $progress ?>%</div>
@@ -234,7 +308,7 @@ $progress = $total > 0 ? round(($done / $total) * 100) : 0;
 
 
             <div class="task-container">
-                <?php $tasks = isset($tasks) ? $tasks : []; foreach ($tasks as $key => $task): ?>
+                <?php $tasks = isset($tasks) ? $tasks : []; foreach ($unfinishedTasks as $key => $task): ?>
                     <div class="task-card">
                         <form method="POST" onsubmit="return confirm('Czy na pewno chcesz to wykonac?');">
                             <button type="submit" name="delete_task" value="<?php echo $key; ?>" class="delete-button">&times;</button>
@@ -252,6 +326,41 @@ $progress = $total > 0 ? round(($done / $total) * 100) : 0;
                                     class="save-button">+</button>
                         </form>
 
+                        <form method="POST" onsubmit="return confirm('Oznaczyć to zadanie jako zakończone?');">
+                            <button type="submit" name="mark_done" value="<?= $key; ?>" class="complete-button">✓</button>
+                        </form>
+
+                        <?php
+                        $taskDate = $task['date'] ?? null;
+                        $taskTimeMinutes = isset($task['time']) ? (int)$task['time'] : 0;
+
+                        $now = new DateTime();
+                        $deadline = $taskDate ? new DateTime($taskDate) : null;
+
+                        if ($deadline) {
+                            // Dodaj czas w minutach, jeśli jest podany
+                            if ($taskTimeMinutes > 0) {
+                                $deadline->modify("+{$taskTimeMinutes} minutes");
+                            }
+
+                            $diff = $now->diff($deadline);
+                            $remaining = '';
+
+                            if ($now > $deadline) {
+                                $remaining = '⏰ <span style="color:red;">Po terminie!</span>';
+                            } else {
+                                $days = $diff->days;
+                                $hours = $diff->h;
+                                $minutes = $diff->i;
+                                $remaining = "⏳ Zostało: ";
+                                if ($days > 0) $remaining .= "$days dni ";
+                                if ($hours > 0) $remaining .= "$hours godz. ";
+                                if ($minutes > 0 && $days === 0) $remaining .= "$minutes min.";
+                            }
+
+                            echo "<p style='font-size:13px; margin-bottom:8px; color:#444;'>$remaining</p>";
+                        }
+                        ?>
 
                         <h3><?php echo $task['title']; ?></h3>
                         <div class="badge"><?php echo $task['category']; ?></div>
@@ -305,14 +414,96 @@ $progress = $total > 0 ? round(($done / $total) * 100) : 0;
                                 </div>
                             <?php endif; ?>
                         </div>
-
-
                     </div>
                 <?php endforeach; ?>
             </div>
+
+            <h1 style="margin:40px 0 20px; text-align:center; color:#2c3f50;">
+                Historia:
+            </h1>
+
+            <div class="task-container">
+                    <?php if (empty($doneTasks)): ?>
+                        <p style="margin-top:100px; ">Historia jest pusta</p>
+                    <?php else: ?>
+                        <?php foreach ($doneTasks as $key => $task): ?>
+                            <div class="task-card done">
+                                <form method="POST" onsubmit="return confirm('Czy na pewno chcesz to wykonac?');">
+                                    <button type="submit" name="delete_task" value="<?php echo $key; ?>" class="delete-button">&times;</button>
+                                </form>
+
+                                <form method="GET" action="edit_task.php">
+                                    <input type="hidden" name="id" value="<?php echo $key; ?>">
+                                    <button type="submit" class="edit-button">=</button>
+                                </form>
+
+                                <form method="POST" onsubmit="return confirm('Czy na pewno chcesz to wykonac?');">
+                                    <button type="submit"
+                                            name="save_csv"
+                                            value="<?= $key; ?>"
+                                            class="save-button">+</button>
+                                </form>
+
+
+                                <h3><?php echo $task['title']; ?></h3>
+                                <div class="badge"><?php echo $task['category']; ?></div>
+                                <p><?php echo formatTaskDescription($task['description']); ?></p>
+
+                                <div class="section">
+                                    <p><strong>Data:</strong> <?php echo $task['date']; ?></p>
+                                    <p><strong>Czas:</strong> <?php echo $task['time']; ?> minut</p>
+                                    <p><strong>Miejsce:</strong> <?php echo $task['location']; ?></p>
+                                    <p><strong>Przypisane do:</strong> <?php echo $task['assigned']; ?></p>
+                                </div>
+
+                                <div class="section">
+                                    <strong>Potrzebne zasoby:</strong>
+                                    <div class="resource-list">
+                                        <?php foreach ($task['resources'] as $resource): ?>
+                                            <span><?php echo $resource; ?></span>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+
+                                <?php if (!empty($task['tags'])): ?>
+                                    <div class="section">
+                                        <strong>Tagi:</strong>
+                                        <div class="resource-list">
+                                            <?php foreach ($task['tags'] as $tag): ?>
+                                                <span><?php echo htmlspecialchars($tag); ?></span>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <div class="footer">
+                                    <div class="priority"><?php echo $task['priority']; ?></div>
+                                    <div class="status"><?php echo $task['status']; ?></div>
+                                </div>
+
+                                <div class="section">
+                                    <?php if (!empty($task['attachments'])): ?>
+                                        <div class="section attachments-section">
+                                            <strong>Załączniki:</strong>
+                                            <ul class="attachments-list">
+                                                <?php foreach ($task['attachments'] as $attachment): ?>
+                                                    <li>
+                                                        <a href="<?php echo htmlspecialchars($attachment); ?>" target="_blank">
+                                                            <?php echo htmlspecialchars(basename($attachment)); ?>
+                                                        </a>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
         </div>
     </div>
-    </div>
+</div>
 
 
 <?php include '../includes/footer.php'; ?>
