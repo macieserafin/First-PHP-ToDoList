@@ -6,6 +6,7 @@ require_once '../classes/TaskManager.php';
 require_once '../classes/CsvHandler.php';
 require_once '../classes/Filter.php';
 require_once '../classes/Sorter.php';
+require_once '../classes/TaskExportImport.php';
 
 if (!isset($_SESSION['user'])) {
     header('Location: ../pages/home.php');
@@ -26,36 +27,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $taskManager = new TaskManager($csvHandler, $userEmail);
     $tasks = $taskManager->getTasks();
 
+
     if (isset($_POST['save_csv'])) {
-        if (!empty($tasks)) {
-            $firstTaskTitle = preg_replace('/[^a-zA-Z0-9_-]/', '_', $tasks[0]['title']);
-            $csvFileName = $firstTaskTitle . '.csv'; // np. test.csv
-
-            $currentFilePath = '../downloads/' . $csvFileName;
-
-            CsvHandler::createBackup($currentFilePath);    // backup z pełną ścieżką
-            CsvHandler::saveTasksToCSV($tasks, $csvFileName); // zapis z samą nazwą
+        $index = (int) $_POST['save_csv'];
+        $exporter = new TaskExportImport($csvHandler, $userEmail);
+        try {
+            $exporter->exportTask($index);
+        } catch (InvalidArgumentException $e) {
+            $_SESSION['errors'][] = $e->getMessage();
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit;
         }
     }
 
     if (isset($_POST['import_csv']) && isset($_FILES['csv_file'])) {
-        $file = $_FILES['csv_file'];
-        if ($file['error'] === UPLOAD_ERR_OK) {
-            $imported = CsvHandler::loadTasksFromCSV($file['tmp_name']);
-            if (!empty($imported)) {
-                // Zakładam, że po imporcie chcesz zapisać pod nazwą pierwszego zadania z połączonej tablicy
-                $_SESSION['tasks'] = array_merge($tasks, $imported);
+        $csv       = file_get_contents($_FILES['csv_file']['tmp_name']);
+        $importer  = new TaskExportImport($csvHandler, $userEmail);
+        $errors    = $importer->importTaskCSV($csv);
 
-                $firstTaskTitle = preg_replace('/[^a-zA-Z0-9_-]/', '_', $_SESSION['tasks'][0]['title']);
-                $csvFileName = $firstTaskTitle . '.csv';
-                $currentFilePath = '../downloads/' . $csvFileName;
-
-                CsvHandler::createBackup($currentFilePath);
-                CsvHandler::saveTasksToCSV($_SESSION['tasks'], $csvFileName);
-            }
+        if (!empty($errors)) {
+            $_SESSION['errors'] = $errors;
         }
-    }
 
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit;
+    }
 
     if (isset($_POST['add_task'])) {
         $errors = $taskManager->addTask($_POST, $_FILES);
@@ -65,9 +61,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $taskManager->deleteTask($_POST['delete_task']);
     }
 
+
     header('Location: ' . $_SERVER['PHP_SELF']);
     exit;
 }
+
 
 $sortBy = $_GET['sort'] ?? '';
 $tasks = Sorter::sortTasks($tasks, $sortBy);

@@ -246,7 +246,10 @@ $progress = $total > 0 ? round(($done / $total) * 100) : 0;
                         </form>
 
                         <form method="POST" onsubmit="return confirm('Czy na pewno chcesz to wykonac?');">
-                            <button  type="submit" name="save_csv" class="save-button">+</button>
+                            <button type="submit"
+                                    name="save_csv"
+                                    value="<?= $key; ?>"
+                                    class="save-button">+</button>
                         </form>
 
 

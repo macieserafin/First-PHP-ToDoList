@@ -1,0 +1,12 @@
+<br />
+<b>Deprecated</b>:  fputcsv(): the $escape parameter must be provided as its default value will change in <b>C:\Users\macie\PhpstormProjects\PHP-ToDoList\classes\TaskExportImport.php</b> on line <b>46</b><br />
+title,category,description,priority,status,date,time,location,assigned,resources,tags,attachments
+<br />
+<b>Deprecated</b>:  fputcsv(): the $escape parameter must be provided as its default value will change in <b>C:\Users\macie\PhpstormProjects\PHP-ToDoList\classes\TaskExportImport.php</b> on line <b>48</b><br />
+<br />
+<b>Warning</b>:  Array to string conversion in <b>C:\Users\macie\PhpstormProjects\PHP-ToDoList\classes\TaskExportImport.php</b> on line <b>48</b><br />
+<br />
+<b>Warning</b>:  Array to string conversion in <b>C:\Users\macie\PhpstormProjects\PHP-ToDoList\classes\TaskExportImport.php</b> on line <b>48</b><br />
+<br />
+<b>Warning</b>:  Array to string conversion in <b>C:\Users\macie\PhpstormProjects\PHP-ToDoList\classes\TaskExportImport.php</b> on line <b>48</b><br />
+Słoń,Domowe,"słon jest duży",Wysoki,"Do zrobienia",2025-06-18,70,Gdynia,,Array,Array,Array
